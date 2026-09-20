@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+artifacts/
+models/*.onnx
+.venv-old/
+.env
+.env.*
+!.env.example
+*.mp4
+*.avi
+*.mov
+*.log
+.DS_Store
+Thumbs.db
