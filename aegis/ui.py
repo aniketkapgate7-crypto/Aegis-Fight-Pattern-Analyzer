@@ -186,7 +186,7 @@ def draw_hud(
 ) -> np.ndarray:
     height, width = frame.shape[:2]
     if width < 720 or height < 400:
-        raise ValueError("FRIDAY HUD requires a display of at least 720x400")
+        raise ValueError("AEGIS CORE HUD requires a display of at least 720x400")
 
     color = threat_color(detection.threat)
     timeline_bottom, footer_top, card_top = 104, height - 38, height - 112
@@ -209,7 +209,7 @@ def draw_hud(
     metric_width = (width - metrics_left - margin - metric_gap * 2) // 3
 
     draw_panel(frame, (margin, 5, brand_right, 65), opacity=0.92)
-    _text(frame, "F.R.I.D.A.Y.", (24, 34), 0.66, CYAN, 1)
+    _text(frame, "AEGIS CORE", (24, 34), 0.66, CYAN, 1)
     _text(frame, "AEGIS COMBAT ANALYSIS", (24, 55), 0.29, WHITE)
 
     draw_panel(frame, (state_left, 5, state_right, 65), opacity=0.92)
@@ -224,9 +224,11 @@ def draw_hud(
     metric_x += metric_width + metric_gap
     draw_metric_card(frame, (metric_x, 5, metric_x + metric_width, 65), f"{latency_ms:.1f} ms", "INFERENCE")
     metric_x += metric_width + metric_gap
-    provider_text = str(provider).replace("ExecutionProvider", "").replace("Provider", "")
-    provider_text = provider_text.replace("MediaPipe", "MP").strip()
-    draw_metric_card(frame, (metric_x, 5, width - margin, 65), provider_text[:13], "ENGINE", CYAN)
+    if provider == "MediaPipe CPU":
+        provider_text = "MediaPipe CPU"
+    else:
+        provider_text = str(provider).replace("ExecutionProvider", "").replace("Provider", "").strip()
+    draw_metric_card(frame, (metric_x, 5, width - margin, 65), provider_text, "ENGINE", CYAN)
 
     _text(frame, "MOTION PATTERN TIMELINE", (18, 94), 0.30, WHITE)
     timeline_x = min(220, int(width * 0.23))
@@ -266,8 +268,8 @@ def draw_hud(
     cv2.circle(frame, (24, height - 19), 7, record_color, -1, cv2.LINE_AA)
     _text(frame, "RECORDING ACTIVE" if recording else "RECORDING OFF", (39, height - 13), 0.30, WHITE)
     _text(frame, f"INCIDENTS {incident_count:02d}", (238, height - 13), 0.30, WHITE)
-    _text(frame, "R", (width - 176, height - 12), 0.40, CYAN, 1)
-    _text(frame, "RECORD", (width - 153, height - 13), 0.29, WHITE)
-    _text(frame, "Q", (width - 74, height - 12), 0.40, CYAN, 1)
-    _text(frame, "EXIT", (width - 51, height - 13), 0.29, WHITE)
+    _text(frame, "R / SPACE", (width - 240, height - 13), 0.32, CYAN, 1)
+    _text(frame, "RECORD", (width - 168, height - 13), 0.28, WHITE)
+    _text(frame, "Q / ESC", (width - 105, height - 13), 0.32, CYAN, 1)
+    _text(frame, "EXIT", (width - 50, height - 13), 0.28, WHITE)
     return frame

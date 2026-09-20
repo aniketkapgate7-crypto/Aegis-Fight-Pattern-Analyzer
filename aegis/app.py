@@ -12,7 +12,7 @@ import numpy as np
 from .models import Detection, Pattern
 from .patterns import PatternEngine
 from .pose import MediaPipePoseEstimator
-from .runtime import SnapdragonSession
+from .runtime import SnapdragonSession, get_runtime_diagnostics
 from .ui import draw_hud
 
 
@@ -50,6 +50,127 @@ def create_neutral_detection(
     )
 
 
+def handle_keypress(key: int) -> str | None:
+    """Map raw keycode to an Aegis application action.
+
+    Supports:
+      - 'q', 'Q', 27 (Esc) -> 'exit'
+      - 'r', 'R', ' ', 32 (Space) -> 'toggle_recording'
+    """
+    if key in (ord("q"), ord("Q"), 27):
+        return "exit"
+    if key in (ord("r"), ord("R"), ord(" "), 32):
+        return "toggle_recording"
+    return None
+
+
+class IncidentTracker:
+    """Manage incident threat detection, re-arming, and deduplication."""
+
+    def __init__(
+        self,
+        threat_threshold: float = INCIDENT_THREAT_THRESHOLD,
+        reset_threshold: float = INCIDENT_RESET_THRESHOLD,
+        log_interval: float = INCIDENT_LOG_INTERVAL,
+    ) -> None:
+        self.threat_threshold = threat_threshold
+        self.reset_threshold = reset_threshold
+        self.log_interval = log_interval
+        self.armed = True
+        self.last_logged = 0.0
+        self.incident_count = 0
+
+    def should_log(
+        self,
+        threat: float,
+        recording: bool,
+        current_time: float,
+    ) -> bool:
+        if threat < self.reset_threshold:
+            self.armed = True
+
+        return bool(
+            recording
+            and self.armed
+            and threat >= self.threat_threshold
+            and (current_time - self.last_logged >= self.log_interval)
+        )
+
+    def record_incident(self, current_time: float) -> int:
+        self.incident_count += 1
+        self.last_logged = current_time
+        self.armed = False
+        return self.incident_count
+
+
+def export_preview(
+    output_path: str | Path = "docs/assets/aegis-core-dashboard.png",
+) -> Path:
+    """Generate a privacy-safe synthetic preview image without using a personal webcam frame.
+
+    The image uses a synthetic dark background and deterministic landmarks showing
+    the AEGIS CORE dashboard suitable for documentation and presentation.
+    """
+    from .models import Point, PoseFrame
+
+    out_file = Path(output_path)
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+
+    points = {
+        "nose": Point(0.50, 0.20),
+        "left_shoulder": Point(0.40, 0.35),
+        "right_shoulder": Point(0.60, 0.35),
+        "left_wrist": Point(0.42, 0.48),
+        "right_wrist": Point(0.93, 0.34),  # Extended punch
+        "left_hip": Point(0.44, 0.62),
+        "right_hip": Point(0.56, 0.62),
+        "left_ankle": Point(0.44, 0.92),
+        "right_ankle": Point(0.56, 0.92),
+    }
+    pose = PoseFrame(timestamp=0.2, points=points)
+
+    detection = Detection(
+        pattern=Pattern.PUNCH,
+        confidence=0.92,
+        threat=0.88,
+        evidence=[
+            "right arm rapidly extended",
+            "arm reach 1.65x shoulder width",
+            "extension speed 1.15/s",
+        ],
+    )
+
+    history = [
+        Detection(Pattern.NEUTRAL, 0.85, 0.05, ["baseline stance"]),
+        Detection(Pattern.NEUTRAL, 0.85, 0.05, ["baseline stance"]),
+        Detection(Pattern.GUARD, 0.78, 0.30, ["hands near face"]),
+        detection,
+    ]
+
+    # Create synthetic dark background with subtle technical styling
+    canvas = np.full((DISPLAY_HEIGHT, DISPLAY_WIDTH, 3), 14, dtype=np.uint8)
+    for y in range(0, DISPLAY_HEIGHT, 40):
+        cv2.line(canvas, (0, y), (DISPLAY_WIDTH, y), (20, 26, 30), 1)
+    for x in range(0, DISPLAY_WIDTH, 40):
+        cv2.line(canvas, (x, 0), (x, DISPLAY_HEIGHT), (20, 26, 30), 1)
+
+    hud_frame = draw_hud(
+        frame=canvas,
+        pose=pose,
+        detection=detection,
+        fps=30.0,
+        latency_ms=8.4,
+        provider="MediaPipe CPU",
+        history=history,
+        recording=True,
+        incident_count=1,
+    )
+
+    cv2.imwrite(str(out_file), hud_frame)
+    print(f"Privacy-safe preview exported to: {out_file.resolve()}")
+    return out_file
+
+
 def run(
     source=0,
     prefer_qnn: bool = False,
@@ -80,9 +201,7 @@ def run(
     log_path = log_directory / "incidents.jsonl"
 
     recording = False
-    incident_count = 0
-    last_logged = 0.0
-    incident_armed = True
+    tracker = IncidentTracker()
     previous_time = time.perf_counter()
     smoothed_fps = 0.0
     smoothed_latency_ms = 0.0
@@ -111,10 +230,9 @@ def run(
     )
 
     print()
-    print("F.R.I.D.A.Y. // AEGIS ONLINE")
-    print(f"Inference provider: {provider}")
-    print("Press R to start or stop recording.")
-    print("Press Q to close the application.")
+    print("AEGIS CORE // SYSTEM ONLINE")
+    print(f"Active inference provider: {provider}")
+    print("Controls: R / Space = Toggle Recording | Q / Esc = Exit")
     print()
 
     try:
@@ -176,24 +294,11 @@ def run(
             fps = smoothed_fps
             latency_ms = smoothed_latency_ms
 
-            # Re-arm only after the action has returned to a safe state. This
-            # prevents one continuous punch/approach from being logged every
-            # second as several separate incidents.
-            if detection.threat < INCIDENT_RESET_THRESHOLD:
-                incident_armed = True
-
-            should_log_incident = (
-                recording
-                and incident_armed
-                and detection.threat
-                >= INCIDENT_THREAT_THRESHOLD
-                and current_time - last_logged
-                >= INCIDENT_LOG_INTERVAL
-            )
-
-            if should_log_incident:
+            if tracker.should_log(detection.threat, recording, current_time):
+                incident_number = tracker.record_incident(current_time)
                 event = {
                     "timestamp": time.time(),
+                    "incident_id": incident_number,
                     "pattern": (
                         detection.pattern.value
                     ),
@@ -222,15 +327,10 @@ def run(
                         json.dumps(event) + "\n"
                     )
 
-                incident_count += 1
-                last_logged = current_time
-                incident_armed = False
-
                 print(
-                    "Incident recorded:",
+                    f"Incident #{incident_number:02d} recorded:",
                     detection.pattern.value,
-                    f"| Threat "
-                    f"{detection.threat * 100:.0f}%",
+                    f"| Threat {detection.threat * 100:.0f}%",
                 )
 
             # Resize first so the HUD text stays sharp.
@@ -249,7 +349,7 @@ def run(
                 provider=provider,
                 history=pattern_history,
                 recording=recording,
-                incident_count=incident_count,
+                incident_count=tracker.incident_count,
             )
 
             cv2.imshow(
@@ -257,26 +357,19 @@ def run(
                 hud_frame,
             )
 
-            # waitKeyEx is more reliable for OpenCV windows on Windows.
             raw_key = cv2.waitKeyEx(1)
             key = raw_key & 0xFF if raw_key >= 0 else -1
+            action = handle_keypress(key)
 
-            if key in (ord("q"), ord("Q"), 27):
+            if action == "exit":
                 print("Closing Aegis.")
                 break
 
-            if key in (ord("r"), ord("R"), ord(" ")):
+            if action == "toggle_recording":
                 recording = not recording
-                incident_armed = True
-
-                recording_status = (
-                    "ON" if recording else "OFF"
-                )
-
-                print(
-                    "Incident recording:",
-                    recording_status,
-                )
+                tracker.armed = True
+                status_text = "ON" if recording else "OFF"
+                print(f"Incident recording: {status_text}")
 
     except KeyboardInterrupt:
         print()
@@ -371,7 +464,7 @@ def demo() -> None:
                 detection=detection,
                 fps=30.0,
                 latency_ms=8.4,
-                provider="Synthetic Demo",
+                provider="MediaPipe CPU",
                 history=pattern_history,
                 recording=False,
                 incident_count=0,
@@ -382,12 +475,15 @@ def demo() -> None:
                 hud_frame,
             )
 
-            key = cv2.waitKey(700) & 0xFF
-
-            if key == ord("q"):
+            raw_key = cv2.waitKey(700)
+            key = raw_key & 0xFF if raw_key >= 0 else -1
+            if handle_keypress(key) == "exit":
                 return
 
-        cv2.waitKey(0)
+        # Keep the final state visible until user dismisses
+        raw_key = cv2.waitKey(0)
+        key = raw_key & 0xFF if raw_key >= 0 else -1
+        handle_keypress(key)
 
     finally:
         cv2.destroyAllWindows()
@@ -411,7 +507,7 @@ def main() -> None:
         action="store_true",
         help=(
             "Prefer the Qualcomm QNN "
-            "execution provider"
+            "execution provider (falls back truthfully if model not loaded)"
         ),
     )
 
@@ -424,7 +520,34 @@ def main() -> None:
         ),
     )
 
+    parser.add_argument(
+        "--export-preview",
+        nargs="?",
+        const="docs/assets/aegis-core-dashboard.png",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Export a privacy-safe synthetic preview image to PATH "
+            "(default: docs/assets/aegis-core-dashboard.png) and exit"
+        ),
+    )
+
+    parser.add_argument(
+        "--diagnostics",
+        action="store_true",
+        help="Display runtime and Snapdragon execution diagnostics and exit",
+    )
+
     args = parser.parse_args()
+
+    if args.diagnostics:
+        diag = get_runtime_diagnostics(prefer_qnn=args.prefer_qnn)
+        print(diag.format_report())
+        return
+
+    if args.export_preview is not None:
+        export_preview(args.export_preview)
+        return
 
     if args.demo:
         demo()
