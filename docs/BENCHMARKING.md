@@ -112,6 +112,9 @@ Outputs saved via `--output` adhere to the following schema:
 
 ## 5. Comparative Evaluation Protocol (CPU vs. Qualcomm QNN)
 
+> [!IMPORTANT]
+> **Technical Truthfulness & Integration Scope**: Supplying `AEGIS_MODEL_PATH` or passing `--prefer-qnn` does not connect model outputs to pose estimation; runtime diagnostics only verify provider availability. Genuine QNN pose execution requires an ONNX/QNN pose-estimator adapter that preprocesses frames, calls `session.run()`, converts outputs to normalized `PoseFrame` landmarks, and replaces `MediaPipePoseEstimator`. MediaPipe CPU is the only currently verified active pose provider.
+
 When transitioning to a compiled Qualcomm AI Hub pose model on a Snapdragon-powered HP PC:
 
 1. **Step 1 — Establish CPU Baseline**: Run `scripts/benchmark.py` with default provider on the evaluation clip. Save results to `artifacts/benchmark_cpu.json`.

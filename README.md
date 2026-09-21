@@ -50,7 +50,7 @@ Aegis solves these challenges through an edge-native, human-in-the-loop movement
 
 ## 6. Privacy and Safety Scope
 - **Motion Patterns, Not Intent**: Aegis measures kinematic movement patterns; it does not infer moral intent, malice, or criminal motivation.
-- **No Face Recognition**: The pipeline does not extract facial features, biometric templates, or identity data.
+- **No Face Recognition or Biometrics**: Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry.
 - **No Identity Tracking**: Operates completely anonymously with no persistent personal identifiers.
 - **Strictly Non-Autonomous**: Aegis is an operator decision-support tool. It must never be used for autonomous physical enforcement, automated discipline, or unsupervised security actions.
 - **Strictly Local Storage**: Event logs remain local on the user's workstation. No telemetry is sent to any external server.
@@ -86,7 +86,7 @@ flowchart TD
 | Pattern | Kinematic Trigger Criteria | Threat Level | Primary Evidence String |
 | --- | --- | --- | --- |
 | **`neutral`** | Upright torso; limbs within baseline zones; no threshold crossed | Low ($0.05$) | `"no risk-pattern threshold crossed"` |
-| **`guard`** | Wrists positioned within $1.30\times$ shoulder width of facial landmarks | Elevated ($0.30$) | `"both hands raised near face"` / `"wrist-face distance"` |
+| **`guard`** | Wrists positioned within $1.30\times$ shoulder width of nose keypoint | Elevated ($0.30$) | `"both hands raised near face"` / `"wrist-face distance"` |
 | **`punch-like extension`** | Rapid horizontal wrist extension ($>1.45\times$ shoulder width) at speed $>0.90 /s$ | High ($0.88$) | `"[side] arm rapidly extended"` with reach & speed metrics |
 | **`kick-like extension`** | Ankle excursion ($>1.35\times$ shoulder width) at speed $>0.65 /s$, elevated above hip line | Critical ($0.90$) | `"[side] leg extended"`, `"ankle elevated"` |
 | **`rapid approach`** | Torso scale expansion $>6\%$ across a 3-frame window at relative rate $>0.80 /s$ | High ($0.72$) | `"body scale increased rapidly"`, `"torso scale growth %"` |
@@ -105,7 +105,7 @@ flowchart TD
 ```powershell
 # 1. Clone the repository
 git clone https://github.com/aniketkapgate7-crypto/Aegis-Fight-Pattern-Analyzer.git
-cd Aegis-Fight-Pattern-Analyzer\Aegis-Fight-Pattern-Analyzer-MVP
+cd Aegis-Fight-Pattern-Analyzer
 
 # 2. Create and activate virtual environment
 python -m venv .venv
@@ -185,24 +185,24 @@ See [docs/BENCHMARKING.md](docs/BENCHMARKING.md) for full benchmark protocol det
 - **Functional Live Webcam Pipeline**: Real-time end-to-end landmark ingestion, pattern classification, threat scoring, and HUD rendering.
 - **Deterministic Synthetic Demo**: Fully operational without camera hardware.
 - **Automated Test Suite**: 17 / 17 automated tests passing deterministically.
-- **Local-Only Incident Logging**: Thread-safe, deduplicated local JSONL event records.
-- **Truthful Active Inference Provider**: **MediaPipe CPU** is the verified active pose provider. QNN execution is not falsely claimed.
+- **Local-Only Incident Logging**: Deduplicated, local JSONL event records (incident logger is local and deduplicated without external telemetry or thread synchronization).
+- **Truthful Active Inference Provider**: **MediaPipe CPU** is the only currently verified active pose provider. QNN execution is not falsely claimed.
 
 ---
 
-## 16. Snapdragon Optimization Pathway
+## 16. Snapdragon Optimization Pathway (Planned)
 
-While the current MVP uses MediaPipe CPU for functional validation, its architecture is modularly separated to facilitate seamless migration to Qualcomm Snapdragon hardware:
+While the current MVP uses MediaPipe CPU for functional validation, its architecture is modularly separated to facilitate migration to Qualcomm Snapdragon hardware:
 
 ```
-[Current Baseline]            [Qualcomm Optimization Path]               [Target Platform]
-MediaPipe CPU Pose  --->  Qualcomm AI Hub Pose Model  --->  ONNX Runtime (QNNExecutionProvider)  --->  Snapdragon X Elite / Plus NPU
+[Current Baseline]                      [Planned Qualcomm Optimization Path]                                      [Target Platform]
+MediaPipe CPU Pose  --->  Qualcomm AI Hub Pose Model  --->  ONNX/QNN Pose Estimator Adapter  --->  Snapdragon X Elite / Plus Hexagon NPU
 ```
 
 1. **Model Selection**: Select an efficient pose model (e.g., YOLOv8-pose or RTMPose) from Qualcomm AI Hub.
 2. **Compilation**: Compile and quantize (INT8/FP16) using Qualcomm AI Hub toolchains specifically targeting the Hexagon NPU.
-3. **Integration**: Supply the compiled model path via `$env:AEGIS_MODEL_PATH="models/qualcomm_pose.onnx"`.
-4. **Verification**: Execute `python -m aegis.app --prefer-qnn --diagnostics` to confirm genuine NPU execution before reporting comparative speedups.
+3. **Adapter Implementation**: Genuine QNN pose execution requires an ONNX/QNN pose-estimator adapter that preprocesses frames, calls `session.run()`, converts outputs to normalized `PoseFrame` landmarks, and replaces `MediaPipePoseEstimator`. Note that supplying `AEGIS_MODEL_PATH` or passing `--prefer-qnn` initializes an ONNX Runtime session to verify provider availability, but does not connect model outputs to pose estimation.
+4. **Verification & Diagnostics**: Runtime diagnostics (`python -m aegis.app --diagnostics`) only verify provider availability. MediaPipe CPU remains the only currently verified active pose provider.
 
 See [docs/SNAPDRAGON_DEPLOYMENT.md](docs/SNAPDRAGON_DEPLOYMENT.md) for step-by-step deployment instructions.
 
@@ -211,7 +211,7 @@ See [docs/SNAPDRAGON_DEPLOYMENT.md](docs/SNAPDRAGON_DEPLOYMENT.md) for step-by-s
 ## 17. Repository Structure
 
 ```
-Aegis-Fight-Pattern-Analyzer-MVP/
+Aegis-Fight-Pattern-Analyzer/
 ├── aegis/                         # Core Python package
 │   ├── __init__.py                # Package initialization
 │   ├── app.py                     # Application CLI, event loop, incident tracking, preview exporter
@@ -229,7 +229,13 @@ Aegis-Fight-Pattern-Analyzer-MVP/
 │   ├── SAFETY_AND_LIMITATIONS.md  # Privacy safeguards, ethical limits & failure modes
 │   └── SNAPDRAGON_DEPLOYMENT.md   # Qualcomm AI Hub & QNN execution guide
 ├── scripts/                       # Developer & evaluation tooling
-│   └── benchmark.py               # Reproducible benchmarking script
+│   ├── benchmark.py               # Reproducible benchmarking script
+│   └── generate_submission_docs.py # Automated generation of challenge submission docs
+├── submission/                    # Challenge submission documents
+│   ├── Aegis_Pitch_Deck.pdf       # 7-slide pitch deck (PDF)
+│   ├── Aegis_Pitch_Deck.pptx      # 7-slide pitch deck (PowerPoint)
+│   ├── Aegis_Project_Description.docx # Detailed project specification (Word)
+│   └── Aegis_Project_Description.pdf  # Detailed project specification (PDF)
 ├── tests/                         # Automated test suite
 │   └── test_patterns.py           # 17 deterministic tests
 ├── .gitignore                     # Git exclusion rules

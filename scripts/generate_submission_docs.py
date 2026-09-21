@@ -85,7 +85,7 @@ def generate_project_description_docx(output_path: Path) -> None:
     
     meta_data = [
         [("Participant", "Aniket Kapgate"), ("Target Platform", "Snapdragon X Elite / Plus HP PCs (Windows 11 on Arm)")],
-        [("Repository", "https://github.com/aniketkapgate7-crypto/Aegis-Fight-Pattern-Analyzer"), ("Evaluation Status", "Verified MediaPipe CPU Baseline | QNN Optimization Ready")]
+        [("Repository", "https://github.com/aniketkapgate7-crypto/Aegis-Fight-Pattern-Analyzer"), ("Evaluation Status", "Verified MediaPipe CPU Baseline | QNN Optimization Planned")]
     ]
     for r_idx, row in enumerate(meta_data):
         for c_idx, (label, val) in enumerate(row):
@@ -104,49 +104,38 @@ def generate_project_description_docx(output_path: Path) -> None:
 
     doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
-    # Helper function for sections
+    # Styling Helpers
     def add_heading(text, level=1):
         p = doc.add_paragraph()
-        p.paragraph_format.space_before = Pt(14)
+        p.paragraph_format.space_before = Pt(14 if level == 1 else 10)
         p.paragraph_format.space_after = Pt(4)
-        run = p.add_run(text)
-        run.font.name = "Segoe UI"
-        run.font.bold = True
-        if level == 1:
-            run.font.size = Pt(14)
-            run.font.color.rgb = NAVY
-        else:
-            run.font.size = Pt(11.5)
-            run.font.color.rgb = CYAN
+        p.paragraph_format.keep_with_next = True
+        r = p.add_run(text)
+        r.font.name = "Segoe UI"
+        r.font.size = Pt(13 if level == 1 else 11)
+        r.font.bold = True
+        r.font.color.rgb = NAVY
         return p
 
-    def add_body(text, bold_prefix=""):
+    def add_body(text):
         p = doc.add_paragraph()
         p.paragraph_format.space_before = Pt(0)
-        p.paragraph_format.space_after = Pt(5)
-        p.paragraph_format.line_spacing = 1.15
-        if bold_prefix:
-            r_pre = p.add_run(bold_prefix)
-            r_pre.font.bold = True
-            r_pre.font.name = "Segoe UI"
-            r_pre.font.size = Pt(10)
-            r_pre.font.color.rgb = NAVY
+        p.paragraph_format.space_after = Pt(6)
         r = p.add_run(text)
         r.font.name = "Segoe UI"
         r.font.size = Pt(10)
         r.font.color.rgb = DARK
         return p
 
-    def add_bullet(text, bold_prefix=""):
+    def add_bullet(text, prefix=""):
         p = doc.add_paragraph(style='List Bullet')
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(3)
-        p.paragraph_format.line_spacing = 1.15
-        if bold_prefix:
-            r_pre = p.add_run(bold_prefix)
-            r_pre.font.bold = True
+        if prefix:
+            r_pre = p.add_run(prefix)
             r_pre.font.name = "Segoe UI"
             r_pre.font.size = Pt(10)
+            r_pre.font.bold = True
             r_pre.font.color.rgb = NAVY
         r = p.add_run(text)
         r.font.name = "Segoe UI"
@@ -162,8 +151,10 @@ def generate_project_description_docx(output_path: Path) -> None:
         "normalized 2D skeletal landmarks, evaluates multi-frame kinematic trajectories over a temporal sliding window, "
         "and identifies strikes, defensive guards, rapid approach, and fall patterns. Crucially, Aegis processes video "
         "entirely in local memory without transmitting imagery to cloud servers, stores no biometric templates, and does "
-        "not perform facial recognition. By uniting zero-cloud on-device inference with explainable kinematic evidence, "
-        "Aegis provides transparent decision-support telemetry for sports coaching, supervised athletic safety, and edge AI research."
+        "not perform facial recognition. Aegis does not perform face recognition, face identification, facial embeddings or "
+        "biometric identity tracking. One coarse nose keypoint is used only for pose geometry. By uniting zero-cloud on-device "
+        "inference with explainable kinematic evidence, Aegis provides transparent decision-support telemetry for sports coaching, "
+        "supervised athletic safety, and edge AI research."
     )
 
     # 2. PROBLEM STATEMENT
@@ -198,7 +189,7 @@ def generate_project_description_docx(output_path: Path) -> None:
         "100% On-Device Processing:"
     )
     add_bullet(
-        " Completely abstracts human subjects into 9 skeletal joint coordinates (nose, shoulders, wrists, hips, ankles), stripping facial geometry, clothing, ethnicity, and identity.",
+        " Completely abstracts human subjects into 9 skeletal joint coordinates (nose, shoulders, wrists, hips, ankles), stripping clothing, ethnicity, and identity. Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry.",
         "Biometric Anonymity:"
     )
     add_bullet(
@@ -290,7 +281,7 @@ def generate_project_description_docx(output_path: Path) -> None:
 
     p_rows = [
         ("Neutral", "Upright torso, limbs in equilibrium", "0.05", "No risk-pattern threshold crossed"),
-        ("Guard", "Wrists within 1.30x shoulder width of face", "0.30", "Both hands raised near face"),
+        ("Guard", "Wrists within 1.30x shoulder width of nose", "0.30", "Both hands raised near face"),
         ("Punch-like Extension", "Arm reach > 1.45x shoulder width, speed > 0.90/s", "0.88", "Right arm rapidly extended (reach 1.65x)"),
         ("Kick-like Extension", "Ankle reach > 1.35x, speed > 0.65/s, elevated", "0.90", "Right leg extended, ankle elevated"),
         ("Rapid Approach", "Torso scale growth > 6% over 3 frames, rate > 0.80/s", "0.72", "Body scale increased rapidly (+12.4%)"),
@@ -322,7 +313,7 @@ def generate_project_description_docx(output_path: Path) -> None:
     # 8. PRIVACY & RESPONSIBLE-USE SAFEGUARDS
     add_heading("8. Privacy & Responsible-Use Safeguards")
     add_bullet(" Video is processed in volatile memory. No raw video frames are saved to disk or transmitted across network interfaces.", "Zero Cloud Upload:")
-    add_bullet(" No facial biometric templates, eye tracking, or identity markers are captured or stored.", "Biometric Anonymity:")
+    add_bullet(" Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry.", "Biometric Anonymity:")
     add_bullet(" Logging occurs only when an operator explicitly toggles recording (R or Space). Log files reside locally in artifacts/.", "Opt-In Local Logging:")
     add_bullet(" Aegis detects physical motions, not criminal intent or moral guilt. Human verification is strictly required.", "No Intent Inference:")
 
@@ -333,18 +324,20 @@ def generate_project_description_docx(output_path: Path) -> None:
     )
     add_bullet(" Fully operational video capture, landmark ingestion, and 960x540 display rendering.", "Functional Live Pipeline:")
     add_bullet(" 17 deterministic unit tests passing in pytest (covering neutral, strikes, guard, falls, approach, jitter rejection, boundaries, deduplication, and provider reporting).", "Automated Test Suite:")
-    add_bullet(" The active landmark engine is MediaPipe CPU. QNN/NPU execution is not falsely claimed.", "Truthful Provider Reporting:")
+    add_bullet(" MediaPipe CPU is the only currently verified active pose provider. Supplying AEGIS_MODEL_PATH does not connect model outputs to pose estimation; runtime diagnostics only verify provider availability. Genuine QNN pose execution requires an ONNX/QNN pose-estimator adapter that preprocesses frames, calls session.run(), converts outputs to normalized PoseFrame landmarks, and replaces MediaPipePoseEstimator.", "Truthful Provider Reporting:")
     add_bullet(" Re-arming mechanism validated; prevents duplicate incident records during continuous high-threat motions.", "Deduplication Verification:")
 
     # 10. SNAPDRAGON OPTIMIZATION PLAN
-    add_heading("10. Snapdragon Optimization Plan & Qualcomm AI Hub")
+    add_heading("10. Snapdragon Optimization Plan & Qualcomm AI Hub (Planned)")
     add_body(
-        "Aegis features a modular runtime interface designed for frictionless transition to Qualcomm Hexagon NPUs on Snapdragon-powered HP PCs:"
+        "Aegis features a modular runtime interface designed for transition to Qualcomm Hexagon NPUs on Snapdragon-powered HP PCs. "
+        "Supplying AEGIS_MODEL_PATH does not connect model outputs to pose estimation; runtime diagnostics only verify provider availability. "
+        "MediaPipe CPU is the only currently verified active pose provider. The planned optimization pathway includes:"
     )
-    add_bullet(" Select a lightweight pose estimation network (YOLOv8n-pose or RTMPose) from the Qualcomm AI Hub catalog.", "1. Model Selection:")
-    add_bullet(" Quantize (INT8) and compile the model specifically targeting the Snapdragon X Elite / Plus Hexagon NPU using the Qualcomm AI Hub compilation API.", "2. Model Compilation:")
-    add_bullet(" Deploy via ONNX Runtime using QNNExecutionProvider with Hexagon Tensor Processor backend delegates (QnnHtp.dll).", "3. NPU Execution:")
-    add_bullet(" Execute scripts/benchmark.py on an identical 1080p clip to measure end-to-end FPS, p95 latency, and power savings.", "4. Verification Protocol:")
+    add_bullet(" Select a lightweight pose estimation network (YOLOv8n-pose or RTMPose) from the Qualcomm AI Hub catalog.", "1. Model Selection (Planned):")
+    add_bullet(" Quantize (INT8) and compile the model specifically targeting the Snapdragon X Elite / Plus Hexagon NPU using the Qualcomm AI Hub compilation API.", "2. Model Compilation (Planned):")
+    add_bullet(" Implement an ONNX/QNN pose-estimator adapter that preprocesses frames, calls session.run(), converts outputs to normalized PoseFrame landmarks, and replaces MediaPipePoseEstimator via ONNX Runtime QNNExecutionProvider (QnnHtp.dll).", "3. NPU Execution (Planned):")
+    add_bullet(" Execute scripts/benchmark.py on an identical 1080p clip to measure end-to-end FPS, p95 latency, and power savings.", "4. Verification Protocol (Planned):")
 
     # 11. ACCESSIBILITY & INNOVATION
     add_heading("11. Accessibility & Key Innovations")
@@ -472,7 +465,7 @@ def generate_project_description_pdf(docx_path: Path, output_path: Path) -> None
     # Meta Table
     meta_data = [
         [Paragraph("<b>Participant:</b> Aniket Kapgate", body_style), Paragraph("<b>Target Platform:</b> Snapdragon X Elite / Plus HP PCs", body_style)],
-        [Paragraph("<b>Repository:</b> github.com/aniketkapgate7-crypto/Aegis-Fight-Pattern-Analyzer", body_style), Paragraph("<b>Status:</b> Verified MediaPipe CPU Baseline | QNN Optimization Ready", body_style)]
+        [Paragraph("<b>Repository:</b> github.com/aniketkapgate7-crypto/Aegis-Fight-Pattern-Analyzer", body_style), Paragraph("<b>Status:</b> Verified MediaPipe CPU Baseline | QNN Optimization Planned", body_style)]
     ]
     t_meta = Table(meta_data, colWidths=[250, 254])
     t_meta.setStyle(TableStyle([
@@ -490,7 +483,7 @@ def generate_project_description_pdf(docx_path: Path, output_path: Path) -> None
     # 1. Executive Summary
     story.append(Paragraph("1. Executive Summary", h1_style))
     story.append(Paragraph(
-        "<b>Aegis</b> is an on-device, privacy-preserving motion intelligence application designed to deliver real-time, explainable combat and athletic movement analysis on Snapdragon-powered HP PCs. By combining normalized skeletal pose landmarks with a sliding-window temporal kinematic engine, Aegis detects rapid strikes, defensive guards, sudden approach, and fall patterns directly on the local workstation. It operates completely offline, eliminates cloud video streaming vulnerabilities, extracts zero biometric facial templates, and empowers human operators with actionable, explainable telemetry.",
+        "<b>Aegis</b> is an on-device, privacy-preserving motion intelligence application designed to deliver real-time, explainable combat and athletic movement analysis on Snapdragon-powered HP PCs. By combining normalized skeletal pose landmarks with a sliding-window temporal kinematic engine, Aegis detects rapid strikes, defensive guards, sudden approach, and fall patterns directly on the local workstation. It operates completely offline, eliminates cloud video streaming vulnerabilities, and empowers human operators with actionable, explainable telemetry. Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry.",
         body_style
     ))
 
@@ -506,7 +499,7 @@ def generate_project_description_pdf(docx_path: Path, output_path: Path) -> None
     story.append(Paragraph(
         "Aegis resolves these issues through an edge-native, human-in-the-loop movement intelligence pipeline: "
         "<b>100% On-Device Processing</b> processes frames in local RAM without cloud transmission. "
-        "<b>Skeletal Landmark Abstraction</b> converts pixels into 9 normalized joint coordinates, stripping identity and facial geometry. "
+        "<b>Skeletal Landmark Abstraction</b> converts pixels into 9 normalized joint coordinates. Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry. "
         "<b>Explainable Kinematics</b> evaluates multi-frame limb reach and velocity. "
         "<b>AEGIS CORE HUD</b> displays live FPS, latency, threat meters, and optional deduplicated incident logs.",
         body_style
@@ -544,7 +537,7 @@ def generate_project_description_pdf(docx_path: Path, output_path: Path) -> None
     p_data = [
         [Paragraph("<b>Pattern</b>", body_style), Paragraph("<b>Kinematic Criteria</b>", body_style), Paragraph("<b>Threat</b>", body_style), Paragraph("<b>Evidence String</b>", body_style)],
         [Paragraph("Neutral", body_style), Paragraph("Equilibrium, no thresholds crossed", body_style), Paragraph("0.05", body_style), Paragraph("no risk-pattern threshold crossed", body_style)],
-        [Paragraph("Guard", body_style), Paragraph("Wrists within 1.30x shoulder width of face", body_style), Paragraph("0.30", body_style), Paragraph("both hands raised near face", body_style)],
+        [Paragraph("Guard", body_style), Paragraph("Wrists within 1.30x shoulder width of nose", body_style), Paragraph("0.30", body_style), Paragraph("both hands raised near face", body_style)],
         [Paragraph("Punch", body_style), Paragraph("Arm reach >1.45x, speed >0.90/s", body_style), Paragraph("0.88", body_style), Paragraph("right arm rapidly extended (reach 1.65x)", body_style)],
         [Paragraph("Kick", body_style), Paragraph("Leg reach >1.35x, speed >0.65/s, elevated", body_style), Paragraph("0.90", body_style), Paragraph("right leg extended, ankle elevated", body_style)],
         [Paragraph("Rapid Approach", body_style), Paragraph("Torso scale growth >6% across 3 frames", body_style), Paragraph("0.72", body_style), Paragraph("body scale increased rapidly (+12.4%)", body_style)],
@@ -567,7 +560,7 @@ def generate_project_description_pdf(docx_path: Path, output_path: Path) -> None
     # 7. Privacy & Responsible Use
     story.append(Paragraph("7. Privacy, Safeguards & Responsible-Use", h1_style))
     story.append(Paragraph("• <b>Zero Cloud Streaming:</b> Video is processed in volatile memory and immediately overwritten.", bullet_style))
-    story.append(Paragraph("• <b>No Facial Biometrics:</b> The system does not extract facial features or identify individuals.", bullet_style))
+    story.append(Paragraph("• <b>No Facial Biometrics:</b> Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry.", bullet_style))
     story.append(Paragraph("• <b>Opt-In Local Logging:</b> Logging occurs only when enabled by the operator (R or Space key).", bullet_style))
     story.append(Paragraph("• <b>Human Interpretation Required:</b> Aegis outputs motion metrics, not intent or guilt. Autonomous enforcement is strictly prohibited.", bullet_style))
 
@@ -575,11 +568,11 @@ def generate_project_description_pdf(docx_path: Path, output_path: Path) -> None
     story.append(Paragraph("8. Verified Evidence & Snapdragon Optimization Plan", h1_style))
     story.append(Paragraph(
         "<b>Current Verified Baseline:</b> Functional webcam ingestion, 17/17 deterministic unit tests passing in pytest, "
-        "and truthful provider reporting (MediaPipe CPU). QNN/NPU execution is not falsely claimed. "
-        "<b>Snapdragon Migration Pathway:</b> 1) Select compatible pose model (YOLOv8n-pose or RTMPose) from Qualcomm AI Hub. "
-        "2) Compile and quantize (INT8) targeting the Hexagon NPU on Snapdragon X Elite/Plus HP laptops. "
-        "3) Integrate via ONNX Runtime QNNExecutionProvider. "
-        "4) Run scripts/benchmark.py to capture comparative FPS and p95 latency gains.",
+        "and truthful provider reporting (MediaPipe CPU is the only currently verified active pose provider). Supplying AEGIS_MODEL_PATH does not connect model outputs to pose estimation; runtime diagnostics only verify provider availability. "
+        "<b>Planned Snapdragon Migration Pathway:</b> 1) Select compatible pose model (YOLOv8n-pose or RTMPose) from Qualcomm AI Hub. "
+        "2) Compile and quantize (INT8) targeting Hexagon NPU on Snapdragon X Elite/Plus HP laptops. "
+        "3) Genuine QNN pose execution requires an ONNX/QNN pose-estimator adapter that preprocesses frames, calls session.run(), converts outputs to normalized PoseFrame landmarks, and replaces MediaPipePoseEstimator via QNNExecutionProvider. "
+        "4) Run scripts/benchmark.py on an identical clip to capture comparative FPS and p95 latency gains.",
         body_style
     ))
 
@@ -782,7 +775,7 @@ def generate_pitch_deck_pptx(output_path: Path) -> None:
 
     sol_cards = [
         ("LOCAL PROCESSING", "100% On-Device Execution", "Processes video frames entirely in local RAM on Snapdragon PCs. Video buffers are analyzed and immediately overwritten—never uploaded."),
-        ("ANONYMIZED SKELETONS", "Human Pose Landmarks", "Extracts 9 normalized 2D skeletal landmarks (wrists, shoulders, hips, ankles). Completely strips facial identity, skin color, and background."),
+        ("ANONYMIZED SKELETONS", "Human Pose Landmarks", "Extracts 9 normalized 2D skeletal landmarks (wrists, shoulders, hips, ankles). Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry."),
         ("TEMPORAL WINDOWS", "Multi-Frame Motion Context", "Maintains a 12-frame sliding window to calculate true physical velocities, body scale growth rates, and torso aspect ratios."),
         ("ACTION VOCABULARY", "6 Biomechanical Patterns", "Deterministically detects Neutral, Guard, Punch-like extension, Kick-like extension, Rapid Approach, and Fall-like recumbent postures."),
         ("TRANSPARENT METRICS", "Explainable Telemetry", "Outputs human-verifiable evidence strings (e.g., 'right arm reach 1.65x, speed 1.15/s') alongside bounded 0-100% threat scores."),
@@ -824,7 +817,7 @@ def generate_pitch_deck_pptx(output_path: Path) -> None:
     flow_steps = [
         ("1. Optical Input", "Live Webcam (720p/1080p) or Prerecorded Video Clip"),
         ("2. Frame Normalization", "OpenCV Ingestion & Downsampling to 960x540 Buffer"),
-        ("3. Pose Estimation", "MediaPipe Pose Estimator (Active Provider: MediaPipe CPU)"),
+        ("3. Pose Estimation", "MediaPipe Pose Estimator (Active Provider: MediaPipe CPU; QNN Planned)"),
         ("4. Landmark Extraction", "9 Normalized Keypoints with Visibility Confidence Gating (>0.40)"),
         ("5. Temporal Sliding Window", "12-Frame Deque Tracking Velocity & Scale Growth"),
         ("6. Kinematic Pattern Engine", "Rule Evaluator: Fall > Punch > Kick > Approach > Guard > Neutral"),
@@ -868,7 +861,7 @@ def generate_pitch_deck_pptx(output_path: Path) -> None:
     p_l1.font.size = Pt(10.5)
     p_l1.font.color.rgb = CYAN
     p_l2 = tf_lbl.add_paragraph()
-    p_l2.text = "Heads-up display running at 960x540 featuring live FPS meter, inference latency counter, dynamic threat gauge, and pattern timeline."
+    p_l2.text = "Heads-up display running at 960x540. QNN Hexagon NPU execution is planned via ONNX/QNN pose adapter."
     p_l2.font.size = Pt(9)
     p_l2.font.color.rgb = GREY
 
@@ -880,7 +873,7 @@ def generate_pitch_deck_pptx(output_path: Path) -> None:
     add_header(s5, "Responsible AI Architecture", "Innovation, Privacy, and Responsible Safety Safeguards")
 
     inno_cards = [
-        ("ZERO FACIAL RECOGNITION", "Biometric Privacy by Design", "Aegis explicitly does not analyze facial landmarks, extract biometric templates, or interface with facial databases. It is architecturally blind to human identity."),
+        ("ZERO FACIAL RECOGNITION", "Biometric Privacy by Design", "Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry."),
         ("VOLATILE FRAME MEMORY", "No Cloud Video Uploads", "All frame computations execute in volatile RAM on the local workstation. Video streams are analyzed frame-by-frame and immediately overwritten."),
         ("OPT-IN LOCAL LOGGING", "Operator-Controlled Storage", "Incident logging is strictly opt-in via manual toggle (R or Space). Log records reside exclusively on the host PC in artifacts/incidents.jsonl."),
         ("INTENT VS. MOTION", "Kinematic Signals, Not Guilt", "Aegis measures biomechanical movement patterns; it does not and cannot infer criminal intent, malice, or moral culpability. Human context is mandatory."),
@@ -917,14 +910,14 @@ def generate_pitch_deck_pptx(output_path: Path) -> None:
     # --------------------------------------------------------------------------
     s6 = prs.slides.add_slide(blank_layout)
     add_background(s6)
-    add_header(s6, "Hardware Acceleration Strategy", "Qualcomm Snapdragon Optimization & NPU Deployment Path")
+    add_header(s6, "Hardware Acceleration Strategy", "Qualcomm Snapdragon Optimization & NPU Deployment Path (Planned)")
 
     snap_steps = [
         ("STAGE 1: FUNCTIONAL BASELINE", "Current MediaPipe CPU Pipeline", "The validated MVP runs MediaPipe CPU to establish ground-truth algorithmic correctness, temporal stability, and deterministic test suites."),
         ("STAGE 2: MODEL SELECTION", "Qualcomm AI Hub Model Catalog", "Select an edge-optimized pose model (e.g., YOLOv8n-pose or RTMPose) from Qualcomm AI Hub with proven low-latency edge topology."),
         ("STAGE 3: COMPILATION & QUANTIZATION", "INT8 / FP16 Hexagon Compilation", "Utilize Qualcomm AI Hub cloud toolchains to compile and quantize the model for the Hexagon NPU on Snapdragon X Elite/Plus platforms."),
-        ("STAGE 4: RUNTIME ADAPTATION", "ONNX Runtime QNN Provider", "Integrate compiled ONNX assets via QNNExecutionProvider with Hexagon Tensor Processor delegates (QnnHtp.dll) behind SnapdragonSession."),
-        ("STAGE 5: RIGOROUS BENCHMARKING", "Identical-Video CPU vs QNN Benchmark", "Execute scripts/benchmark.py on an identical 1080p clip to measure real throughput (FPS), p95 latency reduction, and CPU offload.")
+        ("STAGE 4: RUNTIME ADAPTATION (PLANNED)", "ONNX/QNN Pose-Estimator Adapter", "Implement adapter that preprocesses frames, calls session.run(), converts outputs to normalized PoseFrame landmarks, and replaces MediaPipePoseEstimator via QNN."),
+        ("STAGE 5: RIGOROUS BENCHMARKING (PLANNED)", "Identical-Video CPU vs QNN Benchmark", "Execute scripts/benchmark.py on an identical 1080p clip to measure real throughput (FPS), p95 latency reduction, and CPU offload.")
     ]
 
     card_h = Inches(0.85)
@@ -956,7 +949,7 @@ def generate_pitch_deck_pptx(output_path: Path) -> None:
     note_box = s6.shapes.add_textbox(Inches(0.8), Inches(6.6), Inches(11.733), Inches(0.5))
     tf_n = note_box.text_frame
     p_n = tf_n.paragraphs[0]
-    p_n.text = "* Architectural Transparency Note: All QNN/NPU execution steps are documented as the planned optimization roadmap. Aegis currently executes and reports MediaPipe CPU."
+    p_n.text = "* Architectural Transparency Note: Supplying AEGIS_MODEL_PATH does not connect model outputs to pose estimation. Runtime diagnostics only verify provider availability. MediaPipe CPU is the only currently verified active pose provider; QNN is planned."
     p_n.font.size = Pt(8.5)
     p_n.font.italic = True
     p_n.font.color.rgb = CYAN_DIM
@@ -977,7 +970,7 @@ def generate_pitch_deck_pptx(output_path: Path) -> None:
         ("Functional Live Pipeline", "Real-time webcam ingestion, landmark tracking, threat scoring, and HUD."),
         ("17 / 17 Tests Passing", "Deterministic pytest suite verifying heuristics, safety bounds, and deduplication."),
         ("Synthetic Demo Suite", "Complete camera-free demonstration and visual preview exporter."),
-        ("Truthful Telemetry", "HUD truthfully reports MediaPipe CPU provider without fabricating NPU metrics."),
+        ("Truthful Telemetry", "HUD reports MediaPipe CPU. QNN NPU execution is planned via pose adapter."),
         ("Public GitHub Repository", "github.com/aniketkapgate7-crypto/Aegis-Fight-Pattern-Analyzer")
     ]
     for idx, (t, d) in enumerate(ev_points):
@@ -993,7 +986,7 @@ def generate_pitch_deck_pptx(output_path: Path) -> None:
     tf_rd = tb_rd.text_frame
     tf_rd.word_wrap = True
     rd_points = [
-        ("QNN Pose Model Integration", "Deploy Qualcomm AI Hub compiled YOLOv8-pose INT8 model to Hexagon NPU."),
+        ("QNN Pose Model Integration (Planned)", "Implement ONNX/QNN pose adapter replacing MediaPipe on Hexagon NPU."),
         ("Snapdragon PC Benchmarking", "Evaluate throughput, latency, and power on Snapdragon X Elite HP laptops."),
         ("Multi-Person Interaction", "Extend kinematic engine to multi-subject spatial distance tracking."),
         ("Curated Validation Dataset", "Benchmark against controlled athletic sparring clips for recall/precision metrics.")
@@ -1145,7 +1138,7 @@ def generate_pitch_deck_pdf(output_path: Path) -> None:
     draw_header("Product Vision", "The Solution: Edge-Native Biomechanical Intelligence")
     sol_cards = [
         ("LOCAL PROCESSING", "100% On-Device Execution", "Processes video frames entirely in local RAM on Snapdragon PCs. Video buffers are overwritten immediately."),
-        ("ANONYMIZED SKELETONS", "Human Pose Landmarks", "Extracts 9 normalized 2D skeletal landmarks (wrists, shoulders, hips, ankles). Completely strips facial identity."),
+        ("ANONYMIZED SKELETONS", "Human Pose Landmarks", "Extracts 9 normalized skeletal landmarks. Strips identity: no face recognition or embeddings; nose keypoint used only for geometry."),
         ("TEMPORAL WINDOWS", "Multi-Frame Motion Context", "Maintains a 12-frame sliding window to calculate true physical velocities, body scale growth rates, and torso ratios."),
         ("ACTION VOCABULARY", "6 Biomechanical Patterns", "Deterministically detects Neutral, Guard, Punch-like extension, Kick-like extension, Rapid Approach, and Fall postures."),
         ("TRANSPARENT METRICS", "Explainable Telemetry", "Outputs human-verifiable evidence strings (e.g., 'right arm reach 1.65x, speed 1.15/s') alongside bounded threat scores."),
@@ -1184,7 +1177,7 @@ def generate_pitch_deck_pdf(output_path: Path) -> None:
     flow_steps = [
         ("1. Optical Input", "Webcam / Prerecorded Video Clip"),
         ("2. Normalization", "OpenCV Ingestion (960x540 Buffer)"),
-        ("3. Pose Estimator", "MediaPipe Pose (Active: MediaPipe CPU)"),
+        ("3. Pose Estimator", "MediaPipe Pose (Active: MediaPipe CPU; QNN Planned)"),
         ("4. Landmark Array", "9 Normalized Keypoints (Visibility > 0.40)"),
         ("5. Temporal Window", "12-Frame Deque Tracking Velocity"),
         ("6. Pattern Engine", "Kinematic Rule Evaluator (Priority Order)"),
@@ -1209,7 +1202,7 @@ def generate_pitch_deck_pdf(output_path: Path) -> None:
     c.drawString(505, 125, "Current Verified Engine: MediaPipe CPU (Active)")
     c.setFont("Helvetica", 8.5)
     c.setFillColor(GREY)
-    c.drawString(505, 105, "Live HUD running at 960x540 with FPS counter, inference latency, threat meter, and timeline.")
+    c.drawString(505, 105, "Live HUD running at 960x540. QNN NPU execution is planned via pose adapter.")
     c.showPage()
 
     # --------------------------------------------------------------------------
@@ -1218,7 +1211,7 @@ def generate_pitch_deck_pdf(output_path: Path) -> None:
     draw_bg()
     draw_header("Responsible AI Architecture", "Innovation, Privacy, and Responsible Safety Safeguards")
     inno_cards = [
-        ("ZERO FACIAL RECOGNITION", "Biometric Privacy by Design", "Aegis does not analyze facial landmarks or biometric templates. It is architecturally blind to human identity."),
+        ("ZERO FACIAL RECOGNITION", "Biometric Privacy by Design", "Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry."),
         ("VOLATILE FRAME MEMORY", "No Cloud Video Uploads", "All computations execute in volatile RAM on the local workstation. Video streams are never sent to external servers."),
         ("OPT-IN LOCAL LOGGING", "Operator-Controlled Storage", "Incident logging is strictly opt-in via manual toggle (R or Space). Log records reside exclusively on the host PC in artifacts/."),
         ("INTENT VS. MOTION", "Kinematic Signals, Not Guilt", "Aegis measures biomechanical movement patterns; it does not and cannot infer criminal intent or moral culpability."),
@@ -1252,13 +1245,13 @@ def generate_pitch_deck_pdf(output_path: Path) -> None:
     # SLIDE 6
     # --------------------------------------------------------------------------
     draw_bg()
-    draw_header("Hardware Acceleration Strategy", "Qualcomm Snapdragon Optimization & NPU Deployment Path")
+    draw_header("Hardware Acceleration Strategy", "Qualcomm Snapdragon Optimization & NPU Deployment Path (Planned)")
     snap_steps = [
         ("STAGE 1: FUNCTIONAL BASELINE", "Current MediaPipe CPU Pipeline", "The validated MVP runs MediaPipe CPU to establish ground-truth algorithmic correctness, temporal stability, and deterministic test suites."),
         ("STAGE 2: MODEL SELECTION", "Qualcomm AI Hub Model Catalog", "Select an edge-optimized pose model (e.g., YOLOv8n-pose or RTMPose) from Qualcomm AI Hub with proven low-latency edge topology."),
         ("STAGE 3: COMPILATION & QUANTIZATION", "INT8 / FP16 Hexagon Compilation", "Utilize Qualcomm AI Hub cloud toolchains to compile and quantize the model for the Hexagon NPU on Snapdragon X Elite/Plus platforms."),
-        ("STAGE 4: RUNTIME ADAPTATION", "ONNX Runtime QNN Provider", "Integrate compiled ONNX assets via QNNExecutionProvider with Hexagon Tensor Processor delegates (QnnHtp.dll) behind SnapdragonSession."),
-        ("STAGE 5: RIGOROUS BENCHMARKING", "Identical-Video CPU vs QNN Benchmark", "Execute scripts/benchmark.py on an identical 1080p clip to measure real throughput (FPS), p95 latency reduction, and CPU offload.")
+        ("STAGE 4: ADAPTATION (PLANNED)", "ONNX/QNN Pose-Estimator Adapter", "Adapter preprocesses frames, calls session.run(), converts outputs to PoseFrame, and replaces MediaPipe."),
+        ("STAGE 5: BENCHMARK (PLANNED)", "Identical-Video CPU vs QNN Benchmark", "Execute scripts/benchmark.py on an identical 1080p clip to measure real throughput (FPS) and p95 latency.")
     ]
     card_h6 = 58
     for i, (tag, t, d) in enumerate(snap_steps):
@@ -1275,7 +1268,7 @@ def generate_pitch_deck_pdf(output_path: Path) -> None:
 
     c.setFont("Helvetica-Oblique", 8)
     c.setFillColor(CYAN_DIM)
-    c.drawString(58, 48, "* Architectural Transparency Note: All QNN/NPU execution steps are documented as the planned optimization roadmap. Aegis currently executes and reports MediaPipe CPU.")
+    c.drawString(58, 48, "* Note: Supplying AEGIS_MODEL_PATH does not connect outputs to pose estimation. Diagnostics only verify provider availability. MediaPipe CPU is active; QNN is planned.")
     c.showPage()
 
     # --------------------------------------------------------------------------
@@ -1288,7 +1281,7 @@ def generate_pitch_deck_pdf(output_path: Path) -> None:
         "• Functional Live Pipeline: Real-time webcam ingestion, tracking, threat scoring.",
         "• 17 / 17 Tests Passing: Deterministic pytest suite verifying heuristics and safety bounds.",
         "• Synthetic Demo Suite: Complete camera-free demo & preview image exporter.",
-        "• Truthful Telemetry: Truthfully reports MediaPipe CPU without fabricating NPU metrics.",
+        "• Truthful Telemetry: Truthfully reports MediaPipe CPU provider; QNN NPU execution is planned.",
         "• Public GitHub Repo: github.com/aniketkapgate7-crypto/Aegis-Fight-Pattern-Analyzer"
     ]
     ey = 385
@@ -1309,7 +1302,7 @@ def generate_pitch_deck_pdf(output_path: Path) -> None:
 
     draw_card(346, 80, 268, 360, "DEVELOPMENT ROADMAP")
     rd_lines = [
-        "• QNN Pose Model: Deploy Qualcomm AI Hub compiled YOLOv8-pose INT8 model to Hexagon NPU.",
+        "• QNN Pose Model (Planned): Implement ONNX/QNN pose adapter replacing MediaPipe on Hexagon NPU.",
         "• Snapdragon PC Benchmarks: Evaluate throughput, latency, and power on Snapdragon X Elite laptops.",
         "• Multi-Person Tracking: Extend kinematic engine to multi-subject spatial distance tracking.",
         "• Curated Validation Set: Benchmark against controlled athletic sparring clips for recall/precision."

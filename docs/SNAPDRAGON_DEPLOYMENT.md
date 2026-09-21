@@ -94,9 +94,12 @@ class ONNXQNNPoseEstimator:
 ## 5. Verification Contract for Active Provider
 
 To maintain absolute technical truthfulness:
+- **MediaPipe CPU Baseline**: MediaPipe CPU is the only currently verified active pose provider.
+- **Provider Verification**: Supplying `AEGIS_MODEL_PATH` does not connect model outputs to pose estimation. Runtime diagnostics only verify provider availability.
+- **Pose Adapter Requirement**: Genuine QNN pose execution requires an ONNX/QNN pose-estimator adapter that preprocesses frames, calls `session.run()`, converts outputs to normalized `PoseFrame` landmarks, and replaces `MediaPipePoseEstimator`.
 - Aegis will only report `QNNExecutionProvider` on the HUD when:
   1. An ONNX Runtime session has successfully bound the `QNNExecutionProvider`.
-  2. The landmark coordinate generation loop genuinely invokes that QNN session for every frame.
+  2. The landmark coordinate generation loop genuinely invokes that QNN session for every frame via an integrated adapter.
 - If `--prefer-qnn` is passed but the QNN runtime library or model asset is absent, the system explicitly prints:
   ```
   [AEGIS RUNTIME] QNN pathway requested (--prefer-qnn), but no QNN-compatible pose model is loaded.
@@ -108,13 +111,13 @@ To maintain absolute technical truthfulness:
 
 ## 6. CPU vs. QNN Benchmarking Protocol
 
-Once a compiled model is integrated, the participant will execute `scripts/benchmark.py` under strictly controlled conditions:
+Once an ONNX/QNN pose-estimator adapter and compiled model are integrated, the benchmark will execute `scripts/benchmark.py` under strictly controlled conditions:
 
 ```powershell
-# 1. Measure CPU Baseline
+# 1. Measure CPU Baseline (Current verified pipeline)
 python scripts/benchmark.py --source data/sparring_eval_1080p.mp4 --warmup 100 --frames 1000 --output artifacts/benchmark_cpu.json
 
-# 2. Measure Qualcomm QNN / Snapdragon NPU
+# 2. Measure Qualcomm QNN / Snapdragon NPU (Planned optimization)
 $env:AEGIS_MODEL_PATH = "models/yolov8n_pose_qnn.onnx"
 python scripts/benchmark.py --source data/sparring_eval_1080p.mp4 --warmup 100 --frames 1000 --prefer-qnn --output artifacts/benchmark_qnn.json
 ```

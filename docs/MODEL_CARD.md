@@ -36,7 +36,7 @@
 | Pattern Key | Formal Description | Primary Biomechanical Criteria | Threat Weight |
 | --- | --- | --- | --- |
 | `neutral` | Baseline upright or resting posture | No risk-pattern threshold exceeded | Low ($0.05$) |
-| `guard` | Defensive ready stance | One or both wrists maintained in close proximity to facial landmarks ($<1.30 \times$ shoulder width) | Low-Elevated ($0.30$) |
+| `guard` | Defensive ready stance | One or both wrists maintained in close proximity to nose keypoint ($<1.30 \times$ shoulder width) | Low-Elevated ($0.30$) |
 | `punch-like extension` | Ballistic linear arm extension | Rapid horizontal wrist excursion relative to shoulder axis ($>1.45 \times$ shoulder width at $>0.90 /s$) | High ($0.88$) |
 | `kick-like extension` | Ballistic lower-limb elevation & extension | Ankle displacement beyond hip center ($>1.35 \times$ shoulder width at $>0.65 /s$, or static reach $>1.85 \times$) with vertical elevation | High-Critical ($0.90$) |
 | `rapid approach` | Accelerating movement toward sensor | Torso scale expansion exceeding $6\%$ over 3 consecutive frames with relative speed $>0.80 /s$ | High ($0.72$) |
@@ -46,7 +46,7 @@
 
 ## 4. Privacy & Ethical Design
 
-- **Anonymity by Architecture**: No facial recognition, facial landmark mapping, identity inference, or demographic extraction.
+- **Anonymity by Architecture**: Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry.
 - **On-Device Isolation**: 100% of frame processing occurs on local host memory. Zero cloud data transmission.
 - **Ephemeral Frame Buffering**: Frames are processed immediately and discarded. Video is never saved unless external recording is explicitly configured.
 - **Deterministic Synthetic Mode**: Supports complete testing and preview generation (`--demo` / `--export-preview`) without requiring access to a webcam or live human subject.
@@ -86,4 +86,4 @@ The current system isolates runtime execution within `SnapdragonSession` and `Ru
 1. **Current Verified Baseline**: MediaPipe CPU execution provider on Python 3.11.
 2. **Planned Target Model**: Qualcomm AI Hub-compiled ONNX pose estimation model (e.g., lightweight YOLOv8-pose or RTMPose INT8/FP16 quantized for Snapdragon NPU).
 3. **Execution Runtime**: ONNX Runtime with Qualcomm QNN Execution Provider (`QNNExecutionProvider`) targeting the Hexagon NPU on Snapdragon X Elite / X Plus PCs.
-4. **Validation Contract**: Until a compiled QNN pose model is actively integrated into the landmark inference loop, the system truthfully displays and logs `MediaPipe CPU` as the active provider.
+4. **Validation Contract**: Supplying `AEGIS_MODEL_PATH` does not connect model outputs to pose estimation; runtime diagnostics only verify provider availability. Genuine QNN pose execution requires an ONNX/QNN pose-estimator adapter that preprocesses frames, calls `session.run()`, converts outputs to normalized `PoseFrame` landmarks, and replaces `MediaPipePoseEstimator`. MediaPipe CPU is the only currently verified active pose provider.

@@ -11,7 +11,7 @@
 
 ## 2. Privacy-by-Design Safeguards
 
-1. **No Facial Recognition**: The system processes skeletal landmark coordinates (e.g., nose, shoulders, elbows, wrists, hips, knees, ankles). It does not capture facial geometry, extract biometric templates, or interface with facial recognition algorithms.
+1. **No Facial Recognition or Biometrics**: Aegis does not perform face recognition, face identification, facial embeddings or biometric identity tracking. One coarse nose keypoint is used only for pose geometry.
 2. **No Identity Database**: Aegis operates completely anonymously. It maintains no user profiles, registry of persons, demographic classification, or identity tracking.
 3. **100% Local On-Device Processing**: Video stream frames are analysed entirely in local memory (RAM) on the host machine. Frame buffers are processed instantaneously and overwritten. No video, audio, or metadata is ever transmitted over network interfaces or uploaded to cloud endpoints.
 4. **Optional Local Logging**: Incident recording is strictly opt-in and controlled via manual operator toggle (`R` or `Space`). Event logs (`artifacts/incidents.jsonl`) reside exclusively in local storage on the host machine and are never synchronized externally.

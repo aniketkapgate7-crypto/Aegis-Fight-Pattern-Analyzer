@@ -17,10 +17,12 @@ class RuntimeDiagnostics:
     qnn_pose_active: bool = False
     model_path: str | None = None
     notes: str = (
-        "The current MVP uses an open-source MediaPipe pose pipeline for "
-        "functional validation. Its modular runtime architecture is designed for "
-        "migration to a Qualcomm AI Hub-compatible pose model and Qualcomm QNN "
-        "execution on Snapdragon-powered HP PCs."
+        "The current MVP uses MediaPipe CPU as the only verified active pose provider. "
+        "Supplying AEGIS_MODEL_PATH initializes an ONNX session to verify provider availability, "
+        "but does not connect model outputs to pose estimation. Runtime diagnostics only verify "
+        "provider availability. Genuine QNN pose execution requires an ONNX/QNN pose-estimator "
+        "adapter that preprocesses frames, calls session.run(), converts outputs to normalized "
+        "PoseFrame landmarks, and replaces MediaPipePoseEstimator."
     )
 
     def to_dict(self) -> dict[str, Any]:
@@ -88,10 +90,12 @@ class SnapdragonSession:
     """Runtime provider manager with truthful CPU/QNN separation.
 
     Truthful Execution Contract:
-    The current MVP uses MediaPipe CPU for active pose landmark estimation.
-    Even when an ONNX Runtime session or QNNExecutionProvider is detected,
-    the active pose engine remains 'MediaPipe CPU' until a dedicated pose model
-    is compiled via Qualcomm AI Hub and integrated into the live landmark pipeline.
+    MediaPipe CPU is the only currently verified active pose provider.
+    Supplying AEGIS_MODEL_PATH does not connect model outputs to pose estimation.
+    Runtime diagnostics only verify provider availability.
+    Genuine QNN pose execution requires an ONNX/QNN pose-estimator adapter that
+    preprocesses frames, calls session.run(), converts outputs to normalized
+    PoseFrame landmarks, and replaces MediaPipePoseEstimator.
     """
 
     def __init__(
@@ -144,8 +148,12 @@ class SnapdragonSession:
             providers=providers,
         )
 
-        # Note: The ONNX session is initialized for verification/testing,
-        # but the active pose provider producing landmarks is MediaPipe CPU.
+        # Note: Supplying AEGIS_MODEL_PATH does not connect model outputs to pose estimation.
+        # Runtime diagnostics only verify provider availability.
+        # Genuine QNN pose execution requires an ONNX/QNN pose-estimator adapter that
+        # preprocesses frames, calls session.run(), converts outputs to normalized
+        # PoseFrame landmarks, and replaces MediaPipePoseEstimator.
+        # MediaPipe CPU is the only currently verified active pose provider.
         self.provider = "MediaPipe CPU"
         self.active_provider = "MediaPipe CPU"
         return self.provider
